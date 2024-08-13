@@ -1,0 +1,5 @@
+cd "C:\Users\pyry.huhtanen\Documents\GitHub\Portfolio\Streamlit_app_setup"
+
+pip3 install -r requirements.txt
+
+streamlit run app.py
