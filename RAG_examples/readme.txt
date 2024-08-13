@@ -1,0 +1,1 @@
+Projects related to NLP, text chunking, vectorization, and retrieval
