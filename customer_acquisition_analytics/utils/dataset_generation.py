@@ -10,7 +10,7 @@ from IPython.display import clear_output, display, Markdown, HTML
 def hello():
     print('Hello world!')
     
-def initial_clusters(
+def initial_clusters_deterministic(
         cohort_size: int,
         shares: dict
         ):
@@ -43,6 +43,40 @@ def initial_clusters(
         for i in range(start_index, start_index + size):
             users[i] = cluster
         start_index += size
+    
+    return users
+
+
+def initial_clusters(cohort_size: int, shares: dict):
+    """
+    Allocate cohort users to clusters randomly based on given shares.
+    
+    Parameters:
+        cohort_size (int): Total number of users in the cohort.
+        shares (dict): Dictionary of cluster shares as percentages.
+        
+    Returns:
+        dict: Dictionary of user IDs mapped to their clusters.
+    """
+    # Normalize the shares: Ensure missing 'g' is added and shares sum to 100
+    shares_calc = {key: (value if value is not None else 0) for key, value in shares.items()}
+    total_provided_share = sum(shares_calc.values())
+    
+    if total_provided_share > 100:
+        raise ValueError("Error: Shares exceed 100%")
+    
+    if shares.get('g') is None:
+        g_share = {'g': 100 - total_provided_share}
+        shares.update(g_share)
+
+    # Prepare clusters and their probabilities
+    clusters = list(shares.keys())
+    probabilities = [shares[cluster] / 100 for cluster in clusters]
+    
+    # Randomly assign users to clusters based on probabilities
+    users = {}
+    for i in range(cohort_size):
+        users[i] = random.choices(clusters, weights=probabilities, k=1)[0]
     
     return users
 
