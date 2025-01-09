@@ -88,7 +88,7 @@ def installation_timestamps(users: dict, start_date: str, days: int) -> pd.DataF
 def adjust_timestamps(timestamp: pd.Timestamp, start: pd.Timestamp=None, end: pd.Timestamp=None, initial: bool=False) -> pd.Timestamp:
     '''
     timestamp is the given timestamp to be adjusted
-    start is either the beginning of the timeframe (if initial installation generation) or previous timestamp (if available)
+    start is either the beginning of the timeframe (if initial installation generation) or previous bounding timestamp (installation or end of last session)
     end is the end of the timeframe (when generating initial installations), otherwise not applicable
     initial boolean governs if timestamps should be bounded within timeframe, or if they can freely land after end date, and if the previous timestamp
         should be taken into account 
@@ -103,16 +103,16 @@ def adjust_timestamps(timestamp: pd.Timestamp, start: pd.Timestamp=None, end: pd
     weekday = timestamp.weekday()  # 0=Monday, 6=Sunday
 
     ## Rule 1: Early night
-    if initial:
-        # Rule 1: Hour 00-03, and day is the start day
-        if 0 <= hour < 3 and timestamp.date() == start.date():
+    
+    # Rule 1: Hour 00-03, and day is the start day
+    if 0 <= hour < 3 and timestamp.date() == start.date():
+        if initial:
             if random.random() < 0.8:  # 80% chance
                 new_date = random_date_exclude(start, end, start)
                 timestamp = timestamp.replace(year=new_date.year, month=new_date.month, day=new_date.day)
             # 20% chance nothing changes
-    else:
-        # Modified rule 1 if not initial
-        pass
+        else:  # Not initial, i.e. 00-03 and day is the same as previous timestamp
+            pass  # Nothing changes in this case
     
     ## Rule 2: Early night (continues)
 
@@ -124,9 +124,8 @@ def adjust_timestamps(timestamp: pd.Timestamp, start: pd.Timestamp=None, end: pd
         # 20% chance nothing changes
     # Modified rule 2
     elif not initial and (0 <= hour < 3 and timestamp.date() != start.date()):
-        # Modified rule 2
-        pass
-    
+        if timestamp - start > pd.Timedelta(hours=5) and random.random() < 0.8:  # Over 5 hours since last, 80% chance
+            timestamp -= pd.Timedelta(hours=3)  # Shift 3 hours earlier
     # Note: f moving timestamps forward, no need to check the previous timestamp as no risk in conflicting timestamps
     
     # Rule 3: Hour 03-05
@@ -167,7 +166,16 @@ def adjust_timestamps(timestamp: pd.Timestamp, start: pd.Timestamp=None, end: pd
                 timestamp = timestamp.replace(year=random_weekend.year, month=random_weekend.month, day=random_weekend.day)
             # 90% chance nothing changes
     else:  #not initial
-        pass
+        # Check if the current day is a weekday (Monday to Friday)
+        if weekday in [0, 1, 2, 3, 4]:  # 0=Monday, ..., 4=Friday
+            if random.random() < 0.04:  # 4% chance
+                # Generate the next Saturday or Sunday within the range
+                next_weekend = random.choice(
+                    pd.date_range(start=timestamp + pd.Timedelta(days=1), end=start + pd.Timedelta(days=7), freq='W-SAT')
+                    .union(pd.date_range(start=timestamp + pd.Timedelta(days=1), end=start + pd.Timedelta(days=7), freq='W-SUN'))
+                )
+                # Move timestamp to the selected weekend day, keeping time unchanged
+                timestamp = timestamp.replace(year=next_weekend.year, month=next_weekend.month, day=next_weekend.day)
 
     # Note: Moving timestamps forward, no need to check previous timestamps
 
