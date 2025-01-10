@@ -93,6 +93,9 @@ def adjust_timestamps(timestamp: pd.Timestamp, start: pd.Timestamp=None, end: pd
     initial boolean governs if timestamps should be bounded within timeframe, or if they can freely land after end date, and if the previous timestamp
         should be taken into account 
     '''
+    if timestamp is None:
+        return None
+    
     # Helper function to generate a random date within a timeframe
     def random_date_exclude(start, end, exclude):
         dates = pd.date_range(start=start, end=end).difference([exclude])
@@ -199,8 +202,9 @@ def adjust_timestamps(timestamp: pd.Timestamp, start: pd.Timestamp=None, end: pd
             random_seconds = random.randint(0, int((end - start).total_seconds()))
             timestamp = start + pd.Timedelta(seconds=random_seconds)
     else:  # Not initial
-        pass
-
+        if timestamp > end:  # Timestamp falls after last accepted time
+            return None
+        
     return timestamp
 
 
