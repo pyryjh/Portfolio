@@ -174,8 +174,8 @@ def adjust_timestamps(timestamp: pd.Timestamp, start: pd.Timestamp=None, end: pd
             if random.random() < 0.04:  # 4% chance
                 # Generate the next Saturday or Sunday within the range
                 next_weekend = random.choice(
-                    pd.date_range(start=timestamp + pd.Timedelta(days=1), end=start + pd.Timedelta(days=7), freq='W-SAT')
-                    .union(pd.date_range(start=timestamp + pd.Timedelta(days=1), end=start + pd.Timedelta(days=7), freq='W-SUN'))
+                    pd.date_range(start=timestamp + pd.Timedelta(days=1), end=timestamp + pd.Timedelta(days=7), freq='W-SAT')
+                    .union(pd.date_range(start=timestamp + pd.Timedelta(days=1), end=timestamp + pd.Timedelta(days=7), freq='W-SUN'))
                 )
                 # Move timestamp to the selected weekend day, keeping time unchanged
                 timestamp = timestamp.replace(year=next_weekend.year, month=next_weekend.month, day=next_weekend.day)
