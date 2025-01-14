@@ -73,7 +73,7 @@ def installation_timestamps(users: dict, start_date: str, days: int) -> pd.DataF
     timestamps = start_timestamp + pd.to_timedelta(random_seconds, unit='s')
 
     # Adjust timestamps
-    adjusted_timestamps = [adjust_timestamps(timestamp, start=start_timestamp, end=end_timestamp, initial=True) for timestamp in timestamps]
+    adjusted_timestamps = [adjust_timestamps(timestamp, start_bound=start_timestamp, end_bound=end_timestamp, initial=True) for timestamp in timestamps]
 
     # Create a DataFrame
     df = pd.DataFrame({
@@ -85,7 +85,7 @@ def installation_timestamps(users: dict, start_date: str, days: int) -> pd.DataF
     return df
 
 
-def adjust_timestamps(timestamp: pd.Timestamp, start: pd.Timestamp=None, end: pd.Timestamp=None, initial: bool=False) -> pd.Timestamp:
+def adjust_timestamps(timestamp: pd.Timestamp, start_bound: pd.Timestamp=None, end_bound: pd.Timestamp=None, initial: bool=False) -> pd.Timestamp:
     '''
     timestamp is the given timestamp to be adjusted
     start is either the beginning of the timeframe (if initial installation generation) or previous bounding timestamp (installation or end of last session)
@@ -108,10 +108,10 @@ def adjust_timestamps(timestamp: pd.Timestamp, start: pd.Timestamp=None, end: pd
     ## Rule 1: Early night
     
     # Rule 1: Hour 00-03, and day is the start day
-    if 0 <= hour < 3 and timestamp.date() == start.date():
+    if 0 <= hour < 3 and timestamp.date() == start_bound.date():
         if initial:
             if random.random() < 0.8:  # 80% chance
-                new_date = random_date_exclude(start, end, start)
+                new_date = random_date_exclude(start_bound, end_bound, start_bound)
                 timestamp = timestamp.replace(year=new_date.year, month=new_date.month, day=new_date.day)
             # 20% chance nothing changes
         else:  # Not initial, i.e. 00-03 and day is the same as previous timestamp
@@ -120,14 +120,14 @@ def adjust_timestamps(timestamp: pd.Timestamp, start: pd.Timestamp=None, end: pd
     ## Rule 2: Early night (continues)
 
     # Rule 2: Hour 00-03, and day is not the start day
-    if initial and (0 <= hour < 3 and timestamp.date() != start.date()):
+    if initial and (0 <= hour < 3 and timestamp.date() != start_bound.date()):
         if random.random() < 0.8:  # 80% chance
             timestamp -= pd.Timedelta(hours=3)  # Shift 3 hours earlier
         #    timestamp -= pd.Timedelta(days=1)  # Move to the previous day
         # 20% chance nothing changes
     # Modified rule 2
-    elif not initial and (0 <= hour < 3 and timestamp.date() != start.date()):
-        if timestamp - start > pd.Timedelta(hours=5) and random.random() < 0.8:  # Over 5 hours since last, 80% chance
+    elif not initial and (0 <= hour < 3 and timestamp.date() != start_bound.date()):
+        if timestamp - start_bound > pd.Timedelta(hours=5) and random.random() < 0.8:  # Over 5 hours since last, 80% chance
             timestamp -= pd.Timedelta(hours=3)  # Shift 3 hours earlier
     # Note: f moving timestamps forward, no need to check the previous timestamp as no risk in conflicting timestamps
     
@@ -150,22 +150,22 @@ def adjust_timestamps(timestamp: pd.Timestamp, start: pd.Timestamp=None, end: pd
         # Rule 5: Time 09-00 (9 AM to midnight), Monday or Tuesday
         if 9 <= hour <= 23 and weekday in [0, 1]:  # Monday (0) or Tuesday (1)
             if random.random() < 0.1:  # 10% chance
-                random_sunday = random.choice(pd.date_range(start=start, end=end, freq='W-SUN'))
+                random_sunday = random.choice(pd.date_range(start=start_bound, end=end_bound, freq='W-SUN'))
                 timestamp = timestamp.replace(year=random_sunday.year, month=random_sunday.month, day=random_sunday.day)
             # 90% chance nothing changes
 
         # Rule 6: Time 09-00, Thursday or Friday
         elif 9 <= hour <= 23 and weekday in [3, 4]:  # Thursday (3) or Friday (4)
             if random.random() < 0.1:  # 10% chance
-                random_saturday = random.choice(pd.date_range(start=start, end=end, freq='W-SAT'))
+                random_saturday = random.choice(pd.date_range(start=start_bound, end=end_bound, freq='W-SAT'))
                 timestamp = timestamp.replace(year=random_saturday.year, month=random_saturday.month, day=random_saturday.day)
             # 90% chance nothing changes
 
         # Rule 7: Time 09-00, Wednesday
         elif 9 <= hour <= 23 and weekday == 2:  # Wednesday
             if random.random() < 0.1:  # 10% chance
-                random_weekend = random.choice(pd.date_range(start=start, end=end, freq='W-SAT').union(
-                    pd.date_range(start=start, end=end, freq='W-SUN')))
+                random_weekend = random.choice(pd.date_range(start=start_bound, end=end_bound, freq='W-SAT').union(
+                    pd.date_range(start=start_bound, end=end_bound, freq='W-SUN')))
                 timestamp = timestamp.replace(year=random_weekend.year, month=random_weekend.month, day=random_weekend.day)
             # 90% chance nothing changes
     else:  #not initial
@@ -197,12 +197,12 @@ def adjust_timestamps(timestamp: pd.Timestamp, start: pd.Timestamp=None, end: pd
 
     if initial:
         # Rule 10: Catch all that still fell outside bounds
-        if timestamp < start or timestamp > end:
+        if timestamp < start_bound or timestamp > end_bound:
             # Generate a random time within the timeframe
-            random_seconds = random.randint(0, int((end - start).total_seconds()))
-            timestamp = start + pd.Timedelta(seconds=random_seconds)
+            random_seconds = random.randint(0, int((end_bound - start_bound).total_seconds()))
+            timestamp = start_bound + pd.Timedelta(seconds=random_seconds)
     else:  # Not initial
-        if timestamp > end:  # Timestamp falls after last accepted time
+        if timestamp > end_bound:  # Timestamp falls after last accepted time
             return None
         
     return timestamp
