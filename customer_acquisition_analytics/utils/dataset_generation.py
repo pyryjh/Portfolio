@@ -265,7 +265,7 @@ def plot_hourly_distribution(df, timestamp_column='timestamp'):
     df[timestamp_column] = pd.to_datetime(df[timestamp_column])
     
     # Aggregate counts by hour
-    hourly_counts = df[timestamp_column].dt.floor('H').value_counts().sort_index()
+    hourly_counts = df[timestamp_column].dt.floor('h').value_counts().sort_index()
     
     # Plot the results
     plt.figure(figsize=(12, 6))
