@@ -1,7 +1,7 @@
 # portfolio
 (Non exhaustive) showcase of my analysis work and methods
 
-* [User Acquisition Analysis Workflow](https://github.com/pyryjh/portfolio/tree/main/customer_acquisition_analytics)
+* [User Acquisition Analysis Workflow](https://nbviewer.org/github/pyryjh/portfolio/blob/main/customer_acquisition_analytics/user_acquisition_analysis_workflow.ipynb)
     > Detailing advanced methods of predicting future value of a user cohort
 
     > Example showcasing capability to forecast 90d value difference between 2 cohorts with otherwise indistinguishable aggregate value at 30d mark.
