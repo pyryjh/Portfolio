@@ -268,14 +268,14 @@ def plot_session_start_distribution(
     plt.show()
 
     # Optional: Print the first few session times for inspection
-    print("First few session start times (Primary):")
-    primary_session_start_times = [initial_time + pd.Timedelta(seconds=sec) for sec in seconds_after]
-    print(pd.Series(primary_session_start_times).sort_values().head(10))
+#    print("First few session start times (Primary):")
+#    primary_session_start_times = [initial_time + pd.Timedelta(seconds=sec) for sec in seconds_after]
+#    print(pd.Series(primary_session_start_times).sort_values().head(10))
 
-    if second_mu is not None and second_sigma is not None:
-        print("\nFirst few session start times (Secondary):")
-        secondary_session_start_times = [initial_time + pd.Timedelta(seconds=sec) for sec in second_seconds_after]
-        print(pd.Series(secondary_session_start_times).sort_values().head(10))
+#    if second_mu is not None and second_sigma is not None:
+#        print("\nFirst few session start times (Secondary):")
+#        secondary_session_start_times = [initial_time + pd.Timedelta(seconds=sec) for sec in second_seconds_after]
+#        print(pd.Series(secondary_session_start_times).sort_values().head(10))
 
     # Return expected value of that distribution
     return math.exp(mu + (sigma ** 2) / 2)
